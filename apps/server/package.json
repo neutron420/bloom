@@ -38,6 +38,7 @@
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mediasoup": "^3.19.14",
     "pg": "^8.11.3",
     "prisma": "^7.2.0",
     "socket.io": "^4.8.1",

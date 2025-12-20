@@ -12,6 +12,7 @@ import { setupSwagger } from "./config/swagger.js";
 import { setupGracefulShutdown } from "./utils/shutdown.js";
 import { setupErrorHandler } from "./middleware/index.js";
 import { MAX_CONNECTIONS_PER_ROOM, MAX_TOTAL_CONNECTIONS, MAX_ROOMS } from "./config/constants.js";
+import { createWorkers, closeWorkers } from "./config/mediasoup.js";
 
 // Validate environment variables on startup
 if (process.env.NODE_ENV === "production" && (!process.env.JWT_SECRET || process.env.JWT_SECRET === "your-secret-key-change-in-production")) {
@@ -24,6 +25,16 @@ setupMiddleware(app);
 
 const server = http.createServer(app);
 const io = createSocketIO(server);
+
+// Initialize MediaSoup workers (async initialization)
+createWorkers()
+  .then(() => {
+    console.log("MediaSoup workers initialized");
+  })
+  .catch((error) => {
+    console.error("Failed to initialize MediaSoup workers:", error);
+    process.exit(1);
+  });
 
 // Setup Socket.IO handlers
 setupSocketHandlers(io);

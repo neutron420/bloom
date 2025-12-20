@@ -1,6 +1,7 @@
 import { Server as HttpServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { prisma } from "../lib/prisma.js";
+import { closeWorkers } from "../config/mediasoup.js";
 
 export function setupGracefulShutdown(
   server: HttpServer,
@@ -22,6 +23,14 @@ export function setupGracefulShutdown(
     // Disconnect all sockets
     io.disconnectSockets(true);
     console.log("All socket connections closed");
+
+    // Close MediaSoup workers
+    try {
+      await closeWorkers();
+      console.log("MediaSoup workers closed");
+    } catch (error) {
+      console.error("Error closing MediaSoup workers:", error);
+    }
 
     // Close database connections
     try {

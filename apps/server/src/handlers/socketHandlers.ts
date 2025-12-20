@@ -7,6 +7,7 @@ import { MAX_ROOM_ID_LENGTH, MAX_NAME_LENGTH } from "../config/constants.js";
 import { setupJoinRequestHandlers } from "./joinRequestHandlers.js";
 import { setupChatHandlers } from "./chatHandlers.js";
 import { setupScreenShareHandlers } from "./screenShareHandlers.js";
+import { setupWebRTCHandlers } from "./webrtcHandlers.js";
 
 export function setupSocketHandlers(io: Server): void {
   io.on("connection", (socket: Socket) => {
@@ -26,9 +27,15 @@ export function setupSocketHandlers(io: Server): void {
     // Setup screen sharing handlers
     setupScreenShareHandlers(io, socket);
 
+    // Setup WebRTC/MediaSoup handlers
+    setupWebRTCHandlers(io, socket);
+
     // Single disconnect handler (combines cleanup and database updates)
     socket.on("disconnect", async () => {
       clearRateLimit(socket.id);
+      // Cleanup MediaSoup resources
+      const { cleanupMediaSoupResources } = await import("../config/mediasoup.js");
+      cleanupMediaSoupResources(socket.id);
       await handleDisconnect(io, socket);
     });
   });
