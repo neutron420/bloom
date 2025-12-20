@@ -1,0 +1,125 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?  @unique
+  password  String?  // Hashed password for authentication
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  meetings      MeetingParticipant[]
+  joinRequests  JoinRequest[]
+  chatMessages  ChatMessage[]
+  screenShares  ScreenShare[]
+  
+  @@index([name])
+  @@index([email])
+  @@map("users")
+}
+
+model Meeting {
+  id              String   @id @default(cuid())
+  roomId          String   @unique
+  title           String?
+  requiresApproval Boolean @default(false) // Whether meeting requires approval to join
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  participants MeetingParticipant[]
+  joinRequests JoinRequest[]
+  chatMessages ChatMessage[]
+  screenShares ScreenShare[]
+  
+  @@map("meetings")
+}
+
+model MeetingParticipant {
+  id        String   @id @default(cuid())
+  userId    String
+  meetingId String
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+  isHost    Boolean  @default(false) // Host/admin of the meeting
+  
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, meetingId])
+  @@index([meetingId, leftAt]) // Optimize queries for active participants
+  @@index([userId])
+  @@index([meetingId, isHost]) // Optimize host queries
+  @@map("meeting_participants")
+}
+
+enum JoinRequestStatus {
+  pending
+  approved
+  declined
+}
+
+model JoinRequest {
+  id          String            @id @default(cuid())
+  userId      String
+  meetingId   String
+  name        String
+  email       String?
+  status      JoinRequestStatus @default(pending)
+  requestedAt DateTime          @default(now())
+  respondedAt DateTime?
+  
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, meetingId])
+  @@index([meetingId, status]) // Optimize queries for pending requests
+  @@index([userId])
+  @@map("join_requests")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  meetingId String
+  message   String
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  @@index([meetingId, createdAt]) // Optimize queries for chat history
+  @@index([userId])
+  @@map("chat_messages")
+}
+
+model ScreenShare {
+  id        String   @id @default(cuid())
+  userId    String
+  meetingId String
+  startedAt DateTime @default(now())
+  stoppedAt DateTime?
+  isActive  Boolean  @default(true) // Whether screen sharing is currently active
+  
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  @@index([meetingId, isActive]) // Optimize queries for active screen shares
+  @@index([userId])
+  @@map("screen_shares")
+}
+
