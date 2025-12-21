@@ -17,44 +17,37 @@ export default function NewMeetingModal({ onClose }: NewMeetingModalProps) {
   const [meetingData, setMeetingData] = useState<{ url: string; roomId: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const handleStartInstantMeeting = async () => {
+  const createAndSetMeeting = async () => {
     setLoading(true);
-    setMeetingData(null); // Reset meeting data
+    setMeetingData(null);
     try {
+      console.log("Creating meeting with token:", token ? "Present" : "Not present");
       const response = await createMeeting(token);
-      // Use window.location.origin for the URL
-      const meetingUrl = `${window.location.origin}/meet/${response.meeting.roomId}`;
+      console.log("Meeting created:", response);
+      // Use the meetingUrl from backend (which uses FRONTEND_URL env variable)
+      const meetingUrl = response.meetingUrl || `${window.location.origin}/bloom/${response.meeting.roomId}`;
       setMeetingData({
         url: meetingUrl,
         roomId: response.meeting.roomId,
       });
-      setLoading(false); // Stop loading after setting data
     } catch (error) {
       console.error("Failed to create meeting:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to create meeting. Please try again.";
+      let errorMessage = "Failed to create meeting. Please try again.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       alert(errorMessage);
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateForLater = async () => {
-    setLoading(true);
-    setMeetingData(null); // Reset meeting data
-    try {
-      const response = await createMeeting(token);
-      // Use window.location.origin for the URL
-      const meetingUrl = `${window.location.origin}/meet/${response.meeting.roomId}`;
-      setMeetingData({
-        url: meetingUrl,
-        roomId: response.meeting.roomId,
-      });
-      setLoading(false); // Stop loading after setting data
-    } catch (error) {
-      console.error("Failed to create meeting:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to create meeting. Please try again.";
-      alert(errorMessage);
-      setLoading(false);
-    }
+  const handleStartInstantMeeting = () => {
+    createAndSetMeeting();
+  };
+
+  const handleCreateForLater = () => {
+    createAndSetMeeting();
   };
 
   const handleCopyLink = () => {

@@ -186,10 +186,14 @@ export async function createMeeting(token: string | null): Promise<CreateMeeting
   if (!response.ok) {
     try {
       const error = await parseJSONResponse(response);
-      throw new Error(error.error || "Failed to create meeting");
+      const errorMsg = error.error || error.details || `Failed to create meeting (${response.status})`;
+      console.error("API Error Response:", error);
+      throw new Error(errorMsg);
     } catch (err) {
       if (err instanceof Error && err.message.includes("non-JSON")) {
-        throw new Error(`Failed to create meeting: ${response.status} ${response.statusText}`);
+        const text = await response.text().catch(() => "Unknown error");
+        console.error("Non-JSON Response:", text);
+        throw new Error(`Failed to create meeting: ${response.status} ${response.statusText}. ${text.substring(0, 100)}`);
       }
       throw err;
     }

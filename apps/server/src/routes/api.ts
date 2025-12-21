@@ -150,50 +150,49 @@ router.get("/meetings", optionalAuth, asyncHandler(async (req: AuthRequest, res)
  *         description: Unauthorized
  */
 router.post("/meetings/create", optionalAuth, asyncHandler(async (req: AuthRequest, res) => {
-  logger.info("POST /api/meetings/create - Route hit!");
-  try {
-    // Generate a unique room ID
-    let roomId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    
-    // Ensure roomId is unique (check if it exists)
-    let existingMeeting = await prisma.meeting.findUnique({
+  logger.info("POST /api/meetings/create - Route hit!", { 
+    userId: req.user?.id,
+    hasAuth: !!req.user 
+  });
+  
+  // Generate a unique room ID
+  let roomId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  
+  // Ensure roomId is unique (check if it exists)
+  let existingMeeting = await prisma.meeting.findUnique({
+    where: { roomId },
+  });
+  
+  // If roomId exists, generate a new one (very unlikely but safe)
+  while (existingMeeting) {
+    roomId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    existingMeeting = await prisma.meeting.findUnique({
       where: { roomId },
     });
-    
-    // If roomId exists, generate a new one (very unlikely but safe)
-    while (existingMeeting) {
-      roomId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      existingMeeting = await prisma.meeting.findUnique({
-        where: { roomId },
-      });
-    }
-    
-    // Create meeting
-    const meeting = await prisma.meeting.create({
-      data: {
-        roomId,
-        title: `Bloom Meeting ${roomId.substring(0, 8)}`,
-      },
-      select: {
-        id: true,
-        roomId: true,
-        title: true,
-        createdAt: true,
-      },
-    });
-
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    res.json({
-      message: "Meeting created successfully",
-      meeting,
-      meetingUrl: `${frontendUrl}/meet/${roomId}`,
-    });
-  } catch (error) {
-    console.error("Error creating meeting:", error);
-    res.status(500).json({
-      error: "Failed to create meeting. Please try again.",
-    });
   }
+  
+  // Create meeting
+  const meeting = await prisma.meeting.create({
+    data: {
+      roomId,
+      title: `Bloom Meeting ${roomId.substring(0, 8)}`,
+    },
+    select: {
+      id: true,
+      roomId: true,
+      title: true,
+      createdAt: true,
+    },
+  });
+
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  logger.info("Meeting created successfully", { roomId, meetingId: meeting.id });
+  
+  res.json({
+    message: "Meeting created successfully",
+    meeting,
+    meetingUrl: `${frontendUrl}/meet/${roomId}`,
+  });
 }));
 
 /**

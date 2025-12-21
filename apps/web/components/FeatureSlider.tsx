@@ -116,11 +116,12 @@ export default function FeatureSlider() {
             }}
           >
             {infiniteSlides.map((slide, index) => (
-              <div key={`${slide.id}-${index}`} className={styles.slide}>
-                <div className={styles.imageContainer}>
-                  <img
-                    src={slide.image}
-                    alt={slide.title}
+              slide ? (
+                <div key={`${slide.id}-${index}`} className={styles.slide}>
+                  <div className={styles.imageContainer}>
+                    <img
+                      src={slide.image}
+                      alt={slide.title}
                     className={styles.image}
                   />
                 </div>
@@ -129,7 +130,7 @@ export default function FeatureSlider() {
                   <p className={styles.description}>{slide.description}</p>
                 </div>
               </div>
-            ))}
+            ) : null))}
           </div>
         </div>
 
