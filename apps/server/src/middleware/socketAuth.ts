@@ -1,7 +1,8 @@
 import type { Socket } from "socket.io";
-import type { ExtendedError } from "socket.io/dist/namespace";
 import { verifyToken } from "../utils/auth.js";
 import { logger } from "../utils/logger.js";
+
+type ExtendedError = Error & { data?: any };
 
 export interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -38,7 +39,9 @@ export function socketAuthMiddleware(socket: AuthenticatedSocket, next: (err?: E
 
     // Attach user info to socket
     socket.userId = payload.userId;
-    socket.userEmail = payload.email;
+    if (payload.email) {
+      socket.userEmail = payload.email;
+    }
     socket.userName = payload.name;
 
     logger.info(`Socket authenticated`, {
@@ -70,7 +73,9 @@ export function optionalSocketAuthMiddleware(socket: AuthenticatedSocket, next: 
       const payload = verifyToken(token);
       if (payload) {
         socket.userId = payload.userId;
-        socket.userEmail = payload.email;
+        if (payload.email) {
+          socket.userEmail = payload.email;
+        }
         socket.userName = payload.name;
         logger.debug(`Socket optionally authenticated`, {
           socketId: socket.id,

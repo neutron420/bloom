@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET: string = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
 export interface JWTPayload {
@@ -11,7 +11,12 @@ export interface JWTPayload {
 }
 
 export function generateToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret === "your-secret-key-change-in-production") {
+    throw new Error("JWT_SECRET must be set");
+  }
+  // @ts-ignore - JWT types are strict but this is valid
+  return jwt.sign(payload, secret, {
     expiresIn: JWT_EXPIRES_IN,
   });
 }

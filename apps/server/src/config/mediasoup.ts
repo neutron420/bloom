@@ -1,5 +1,5 @@
 import mediasoup from "mediasoup";
-import type { Worker, Router, WebRtcTransport } from "mediasoup/node/lib/types";
+import type { Worker, Router, WebRtcTransport } from "mediasoup/types";
 import { logger } from "../utils/logger.js";
 
 // MediaSoup configuration
@@ -95,7 +95,7 @@ export async function createWorkers(): Promise<void> {
     const worker = await mediasoup.createWorker({
       ...MEDIASOUP_CONFIG.worker,
       logLevel: MEDIASOUP_CONFIG.worker.logLevel,
-      logTags: MEDIASOUP_CONFIG.worker.logTags,
+      logTags: [...MEDIASOUP_CONFIG.worker.logTags],
     });
 
     worker.on("died", () => {
@@ -126,6 +126,9 @@ export async function getOrCreateRouter(roomId: string): Promise<Router> {
 
   // Get next worker (round-robin)
   const worker = workers[nextWorkerIndex];
+  if (!worker) {
+    throw new Error("No MediaSoup workers available");
+  }
   nextWorkerIndex = (nextWorkerIndex + 1) % workers.length;
 
   // Create router

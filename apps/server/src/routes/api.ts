@@ -151,7 +151,7 @@ router.get("/meetings", optionalAuth, asyncHandler(async (req: AuthRequest, res)
  */
 router.post("/meetings/create", optionalAuth, asyncHandler(async (req: AuthRequest, res) => {
   logger.info("POST /api/meetings/create - Route hit!", { 
-    userId: req.user?.id,
+    userId: req.user?.userId,
     hasAuth: !!req.user 
   });
   

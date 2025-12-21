@@ -8,7 +8,7 @@ import type {
   IceParameters,
   IceCandidate,
   RtpCapabilities,
-} from "mediasoup/node/lib/types";
+} from "mediasoup/types";
 import {
   getOrCreateRouter,
   getRouter,
@@ -130,9 +130,17 @@ async function handleCreateTransport(
 
     const transportData = mediasoupTransports.get(socket.id)!;
 
+    // Get listen IP from config
+    const listenIp = process.env.MEDIASOUP_LISTEN_IP || "127.0.0.1";
+    const announcedIp = process.env.MEDIASOUP_ANNOUNCED_IP;
+    
     // Create transport based on direction
+    const listenIps: Array<{ ip: string; announcedIp?: string }> = announcedIp
+      ? [{ ip: listenIp, announcedIp }]
+      : [{ ip: listenIp }];
+    
     const transport = await router.createWebRtcTransport({
-      listenIps: [{ ip: "127.0.0.1", announcedIp: undefined }],
+      listenIps,
       enableUdp: true,
       enableTcp: true,
       preferUdp: true,
@@ -146,26 +154,18 @@ async function handleCreateTransport(
     }
 
     // Handle transport events
-    transport.on("dtlsstatechange", (dtlsState) => {
+    transport.on("dtlsstatechange", (dtlsState: string) => {
       if (dtlsState === "closed") {
         transport.close();
       }
     });
 
-    transport.on("icestatechange", (iceState) => {
+    transport.on("icestatechange", (iceState: string) => {
       logger.debug("Transport ICE state changed", { transportId: transport.id, iceState, socketId: socket.id });
     });
 
-    transport.on("icecandidate", (event) => {
-      socket.emit("transport-ice-candidate", {
-        transportId: transport.id,
-        candidate: event.candidate,
-      });
-    });
-
-    transport.on("connect", () => {
-      logger.debug("Transport connected", { transportId: transport.id, socketId: socket.id });
-    });
+    // Note: icecandidate and connect events are handled internally by mediasoup
+    // We emit transport info to client instead
 
     // Send transport parameters to client
     socket.emit("transport-created", {

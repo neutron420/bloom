@@ -258,6 +258,10 @@ router.post("/google", asyncHandler(async (req, res) => {
 
   try {
     // Verify the Google token
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res.status(500).json({ error: "Google Client ID not configured" });
+    }
+    
     const ticket = await googleClient.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
