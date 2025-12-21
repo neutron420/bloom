@@ -1,6 +1,7 @@
 import { rooms, socketConnections, participantUpdateQueue } from "../store/connectionStore.js";
 import { MAX_CONNECTIONS_PER_ROOM, MAX_TOTAL_CONNECTIONS, MAX_ROOMS, PARTICIPANT_UPDATE_DEBOUNCE_MS } from "../config/constants.js";
 import { Server } from "socket.io";
+import { logger } from "./logger.js";
 
 export function getRoomSize(roomId: string): number {
   return rooms[roomId] ? Object.keys(rooms[roomId]).length : 0;
@@ -48,7 +49,7 @@ export function broadcastParticipants(io: Server, roomId: string): void {
     if (room) {
       const currentList = Object.values(room);
       io.to(roomId).emit("participants", currentList);
-      console.log(`Broadcasted participants list to room ${roomId}: ${currentList.length} participants`);
+      logger.debug("Broadcasted participants list", { roomId, participantCount: currentList.length });
     }
   });
 }

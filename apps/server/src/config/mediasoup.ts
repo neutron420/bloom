@@ -1,5 +1,6 @@
 import mediasoup from "mediasoup";
 import type { Worker, Router, WebRtcTransport } from "mediasoup/node/lib/types";
+import { logger } from "../utils/logger.js";
 
 // MediaSoup configuration
 const MEDIASOUP_CONFIG = {
@@ -98,15 +99,15 @@ export async function createWorkers(): Promise<void> {
     });
 
     worker.on("died", () => {
-      console.error("MediaSoup worker died, exiting in 2 seconds...");
+      logger.error("MediaSoup worker died, exiting in 2 seconds...", { workerIndex: i, pid: worker.pid });
       setTimeout(() => process.exit(1), 2000);
     });
 
     workers.push(worker);
-    console.log(`MediaSoup worker ${i} created [pid:${worker.pid}]`);
+    logger.info("MediaSoup worker created", { workerIndex: i, pid: worker.pid });
   }
 
-  console.log(`MediaSoup: ${workers.length} worker(s) created`);
+  logger.info("MediaSoup workers created", { count: workers.length });
 }
 
 /**
@@ -133,7 +134,7 @@ export async function getOrCreateRouter(roomId: string): Promise<Router> {
   });
 
   mediasoupRouters.set(roomId, router);
-  console.log(`MediaSoup router created for room: ${roomId}`);
+  logger.info("MediaSoup router created", { roomId });
 
   return router;
 }
@@ -153,7 +154,7 @@ export function deleteRouter(roomId: string): void {
   if (router) {
     router.close();
     mediasoupRouters.delete(roomId);
-    console.log(`MediaSoup router deleted for room: ${roomId}`);
+    logger.info("MediaSoup router deleted", { roomId });
   }
 }
 
@@ -188,7 +189,7 @@ export function cleanupMediaSoupResources(socketId: string): void {
     try {
       producer.close();
     } catch (error) {
-      console.error("Error closing producer:", error);
+      logger.error("Error closing producer", { error, socketId });
     }
   });
 
@@ -197,7 +198,7 @@ export function cleanupMediaSoupResources(socketId: string): void {
     try {
       consumer.close();
     } catch (error) {
-      console.error("Error closing consumer:", error);
+      logger.error("Error closing consumer", { error, socketId });
     }
   });
 
@@ -206,7 +207,7 @@ export function cleanupMediaSoupResources(socketId: string): void {
     try {
       transportData.sendTransport.close();
     } catch (error) {
-      console.error("Error closing send transport:", error);
+      logger.error("Error closing send transport", { error, socketId });
     }
   }
 
@@ -214,7 +215,7 @@ export function cleanupMediaSoupResources(socketId: string): void {
     try {
       transportData.recvTransport.close();
     } catch (error) {
-      console.error("Error closing recv transport:", error);
+      logger.error("Error closing recv transport", { error, socketId });
     }
   }
 
@@ -229,6 +230,6 @@ export async function closeWorkers(): Promise<void> {
     worker.close();
   }
   workers = [];
-  console.log("All MediaSoup workers closed");
+  logger.info("All MediaSoup workers closed");
 }
 

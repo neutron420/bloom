@@ -17,6 +17,7 @@ import {
   cleanupMediaSoupResources,
 } from "../config/mediasoup.js";
 import { socketConnections } from "../store/connectionStore.js";
+import { logger } from "../utils/logger.js";
 
 export function setupWebRTCHandlers(io: Server, socket: Socket): void {
   // Get router RTP capabilities
@@ -99,7 +100,7 @@ async function handleGetRouterRtpCapabilities(
       iceServers: getTransportConfig().iceServers,
     });
   } catch (error) {
-    console.error("Error getting router RTP capabilities:", error);
+    logger.error("Error getting router RTP capabilities", { error, socketId: socket.id, roomId });
     socket.emit("webrtc-error", { message: "Failed to get router capabilities" });
   }
 }
@@ -152,7 +153,7 @@ async function handleCreateTransport(
     });
 
     transport.on("icestatechange", (iceState) => {
-      console.log(`Transport ICE state changed: ${iceState}`);
+      logger.debug("Transport ICE state changed", { transportId: transport.id, iceState, socketId: socket.id });
     });
 
     transport.on("icecandidate", (event) => {
@@ -163,7 +164,7 @@ async function handleCreateTransport(
     });
 
     transport.on("connect", () => {
-      console.log(`Transport connected: ${transport.id}`);
+      logger.debug("Transport connected", { transportId: transport.id, socketId: socket.id });
     });
 
     // Send transport parameters to client
@@ -175,7 +176,7 @@ async function handleCreateTransport(
       dtlsParameters: transport.dtlsParameters,
     });
   } catch (error) {
-    console.error("Error creating transport:", error);
+    logger.error("Error creating transport", { error, socketId: socket.id, roomId, direction });
     socket.emit("webrtc-error", { message: "Failed to create transport" });
   }
 }
@@ -207,7 +208,7 @@ async function handleConnectTransport(
     await transport.connect({ dtlsParameters });
     socket.emit("transport-connected", { transportId });
   } catch (error) {
-    console.error("Error connecting transport:", error);
+    logger.error("Error connecting transport", { error, socketId: socket.id, transportId });
     socket.emit("webrtc-error", { message: "Failed to connect transport" });
   }
 }
@@ -259,9 +260,9 @@ async function handleProduce(
       transportData.producers.delete(producer.id);
     });
 
-    console.log(`Producer created: ${producer.id} (${kind}) by ${connection.name}`);
+    logger.info("Producer created", { producerId: producer.id, kind, userId: connection.userId, userName: connection.name });
   } catch (error) {
-    console.error("Error creating producer:", error);
+    logger.error("Error creating producer", { error, socketId: socket.id });
     socket.emit("webrtc-error", { message: "Failed to create producer" });
   }
 }
@@ -301,7 +302,7 @@ async function handleStopProducing(
 
     socket.emit("producer-stopped", { producerId });
   } catch (error) {
-    console.error("Error stopping producer:", error);
+    logger.error("Error stopping producer", { error, socketId: socket.id, producerId });
     socket.emit("webrtc-error", { message: "Failed to stop producer" });
   }
 }
@@ -414,9 +415,9 @@ async function handleConsumeProducer(
       transportData.consumers.delete(consumer.id);
     });
 
-    console.log(`Consumer created: ${consumer.id} for producer ${producerId}`);
+    logger.info("Consumer created", { consumerId: consumer.id, producerId, socketId: socket.id });
   } catch (error) {
-    console.error("Error creating consumer:", error);
+    logger.error("Error creating consumer", { error, socketId: socket.id, producerId });
     socket.emit("webrtc-error", { message: "Failed to create consumer" });
   }
 }

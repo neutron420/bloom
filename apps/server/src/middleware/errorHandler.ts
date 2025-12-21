@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
+import { logger } from "../utils/logger.js";
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -12,12 +13,13 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ): void {
-  // Log error for debugging (in production, use proper logging)
-  console.error("Error:", {
+  // Log error for debugging
+  logger.error("Request error", {
     message: err.message,
     stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
     path: req.path,
     method: req.method,
+    statusCode: "statusCode" in err ? err.statusCode : 500,
   });
 
   // Handle Zod validation errors
@@ -47,7 +49,7 @@ export function errorHandler(
       return;
     }
     // Log other Prisma errors
-    console.error("Prisma error:", prismaError.code, prismaError.meta);
+    logger.error("Prisma error", { code: prismaError.code, meta: prismaError.meta });
   }
 
   // Handle custom application errors

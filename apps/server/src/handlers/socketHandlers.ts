@@ -8,10 +8,18 @@ import { setupJoinRequestHandlers } from "./joinRequestHandlers.js";
 import { setupChatHandlers } from "./chatHandlers.js";
 import { setupScreenShareHandlers } from "./screenShareHandlers.js";
 import { setupWebRTCHandlers } from "./webrtcHandlers.js";
+import { logger } from "../utils/logger.js";
+import type { AuthenticatedSocket } from "../middleware/socketAuth.js";
 
 export function setupSocketHandlers(io: Server): void {
   io.on("connection", (socket: Socket) => {
-    console.log("User connected:", socket.id);
+    const authSocket = socket as AuthenticatedSocket;
+    logger.info("User connected", {
+      socketId: socket.id,
+      userId: authSocket.userId,
+      userName: authSocket.userName,
+      ip: socket.handshake.address,
+    });
 
     // Regular join (direct join, no approval needed)
     socket.on("join-room", async ({ roomId, name, email }: { roomId: string; name: string; email?: string }) => {
@@ -68,7 +76,12 @@ async function handleJoinRoom(
       return;
     }
     
-    console.log(`${name} (${socket.id}) joining room: ${roomId}`);
+    logger.info("User joining room", {
+      socketId: socket.id,
+      name,
+      roomId,
+      userId: (socket as AuthenticatedSocket).userId,
+    });
     
     // Leave any previous rooms this socket might be in
     await leavePreviousRooms(io, socket);
@@ -112,7 +125,7 @@ async function handleJoinRoom(
     rooms[roomId][socket.id] = user.name;
 
     const participantList = Object.values(rooms[roomId]);
-    console.log(`Room ${roomId} now has ${participantList.length} participants`);
+    logger.debug(`Room ${roomId} now has ${participantList.length} participants`, { roomId, participantCount: participantList.length });
 
     // Emit to the newly joined socket immediately
     socket.emit("participants", participantList);
@@ -145,13 +158,18 @@ async function handleJoinRoom(
     // Debounce broadcast to others
     broadcastParticipants(io, roomId);
   } catch (error) {
-    console.error("Error joining room:", error);
+    logger.error("Error joining room", { error, socketId: socket.id, roomId });
     socket.emit("error", { message: "Failed to join room" });
   }
 }
 
 async function handleDisconnect(io: Server, socket: Socket): Promise<void> {
-  console.log("User disconnected:", socket.id);
+  const authSocket = socket as AuthenticatedSocket;
+  logger.info("User disconnected", {
+    socketId: socket.id,
+    userId: authSocket.userId,
+    userName: authSocket.userName,
+  });
   
   const connection = socketConnections[socket.id];
   
@@ -181,10 +199,14 @@ async function handleDisconnect(io: Server, socket: Socket): Promise<void> {
           userId: connection.userId,
           userName: connection.name,
         });
-        console.log(`Screen share stopped for ${connection.name} on disconnect`);
+        logger.info("Screen share stopped on disconnect", {
+          userId: connection.userId,
+          userName: connection.name,
+          shareId: activeShare.id,
+        });
       }
     } catch (error) {
-      console.error("Error stopping screen share on disconnect:", error);
+      logger.error("Error stopping screen share on disconnect", { error, userId: connection.userId });
     }
 
     // Mark participant as left in database
@@ -199,9 +221,13 @@ async function handleDisconnect(io: Server, socket: Socket): Promise<void> {
           leftAt: new Date(),
         },
       });
-      console.log(`User ${connection.name} left meeting`);
+      logger.info("User left meeting", {
+        userId: connection.userId,
+        userName: connection.name,
+        roomId: connection.roomId,
+      });
     } catch (error) {
-      console.error("Error updating participant:", error);
+      logger.error("Error updating participant", { error, userId: connection.userId });
     }
 
     // Update room participants
@@ -281,7 +307,7 @@ async function getOrCreateUser(name: string, email?: string) {
       },
       select: { id: true, name: true, email: true },
     });
-    console.log(`Created new user: ${user.name} (${user.id})`);
+    logger.info("Created new user", { userId: user.id, userName: user.name, email: user.email });
   }
 
   return user;
@@ -301,7 +327,7 @@ async function getOrCreateMeeting(roomId: string) {
       },
       select: { id: true, roomId: true, title: true },
     });
-    console.log(`Created new meeting: ${meeting.roomId}`);
+    logger.info("Created new meeting", { meetingId: meeting.id, roomId: meeting.roomId });
   }
 
   return meeting;
@@ -339,9 +365,9 @@ async function upsertParticipant(userId: string, meetingId: string, roomId: stri
   });
   
   if (isHost) {
-    console.log(`User joined meeting ${roomId} as HOST`);
+    logger.info("User joined meeting as HOST", { userId, meetingId, roomId });
   } else {
-    console.log(`User joined meeting ${roomId}`);
+    logger.debug("User joined meeting", { userId, meetingId, roomId });
   }
 }
 

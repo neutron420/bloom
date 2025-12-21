@@ -33,7 +33,10 @@ try {
     }
   });
 } catch (error) {
-  console.warn("Could not load .env file, using system environment variables");
+  // Logger not available here yet, use console.warn
+  if (process.env.NODE_ENV !== "production") {
+    console.warn("Could not load .env file, using system environment variables");
+  }
 }
 
 const globalForPrisma = globalThis as unknown as {

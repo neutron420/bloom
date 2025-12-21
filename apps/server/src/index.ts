@@ -13,10 +13,11 @@ import { setupGracefulShutdown } from "./utils/shutdown.js";
 import { setupErrorHandler } from "./middleware/index.js";
 import { MAX_CONNECTIONS_PER_ROOM, MAX_TOTAL_CONNECTIONS, MAX_ROOMS } from "./config/constants.js";
 import { createWorkers, closeWorkers } from "./config/mediasoup.js";
+import { logger } from "./utils/logger.js";
 
 // Validate environment variables on startup
 if (process.env.NODE_ENV === "production" && (!process.env.JWT_SECRET || process.env.JWT_SECRET === "your-secret-key-change-in-production")) {
-  console.error("ERROR: JWT_SECRET must be set in production!");
+  logger.error("ERROR: JWT_SECRET must be set in production!");
   process.exit(1);
 }
 
@@ -29,10 +30,10 @@ const io = createSocketIO(server);
 // Initialize MediaSoup workers (async initialization)
 createWorkers()
   .then(() => {
-    console.log("MediaSoup workers initialized");
+    logger.info("MediaSoup workers initialized");
   })
   .catch((error) => {
-    console.error("Failed to initialize MediaSoup workers:", error);
+    logger.error("Failed to initialize MediaSoup workers", { error });
     process.exit(1);
   });
 
@@ -59,9 +60,14 @@ setupGracefulShutdown(server, io);
 
 // Start server
 server.listen(3001, () => {
-  console.log("Backend running on http://localhost:3001");
-  console.log("Database connected");
-  console.log("Optimized for high concurrency");
-  console.log(`Limits: ${MAX_CONNECTIONS_PER_ROOM} users/room, ${MAX_TOTAL_CONNECTIONS} total, ${MAX_ROOMS} rooms`);
-  console.log("Security: Helmet, Rate Limiting, Compression enabled");
+  logger.info("Backend running on http://localhost:3001");
+  logger.info("Database connected");
+  logger.info("Optimized for high concurrency", {
+    limits: {
+      perRoom: MAX_CONNECTIONS_PER_ROOM,
+      total: MAX_TOTAL_CONNECTIONS,
+      rooms: MAX_ROOMS,
+    },
+  });
+  logger.info("Security: Helmet, Rate Limiting, Compression enabled");
 });
