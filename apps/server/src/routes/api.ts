@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma.js";
 import { optionalAuth } from "../middleware/auth.js";
 import type { AuthRequest } from "../middleware/auth.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
+import { logger } from "../utils/logger.js";
 
 const router = Router();
 
@@ -132,6 +133,67 @@ router.get("/meetings", optionalAuth, asyncHandler(async (req: AuthRequest, res)
       hasPrev: page > 1,
     },
   });
+}));
+
+/**
+ * @swagger
+ * /api/meetings/create:
+ *   post:
+ *     summary: Create a new meeting
+ *     tags: [Meetings]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Meeting created successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/meetings/create", optionalAuth, asyncHandler(async (req: AuthRequest, res) => {
+  logger.info("POST /api/meetings/create - Route hit!");
+  try {
+    // Generate a unique room ID
+    let roomId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    
+    // Ensure roomId is unique (check if it exists)
+    let existingMeeting = await prisma.meeting.findUnique({
+      where: { roomId },
+    });
+    
+    // If roomId exists, generate a new one (very unlikely but safe)
+    while (existingMeeting) {
+      roomId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      existingMeeting = await prisma.meeting.findUnique({
+        where: { roomId },
+      });
+    }
+    
+    // Create meeting
+    const meeting = await prisma.meeting.create({
+      data: {
+        roomId,
+        title: `Bloom Meeting ${roomId.substring(0, 8)}`,
+      },
+      select: {
+        id: true,
+        roomId: true,
+        title: true,
+        createdAt: true,
+      },
+    });
+
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    res.json({
+      message: "Meeting created successfully",
+      meeting,
+      meetingUrl: `${frontendUrl}/meet/${roomId}`,
+    });
+  } catch (error) {
+    console.error("Error creating meeting:", error);
+    res.status(500).json({
+      error: "Failed to create meeting. Please try again.",
+    });
+  }
 }));
 
 /**

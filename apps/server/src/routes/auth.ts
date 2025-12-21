@@ -5,6 +5,7 @@ import { authenticate } from "../middleware/auth.js";
 import type { AuthRequest } from "../middleware/auth.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
 import { z } from "zod";
+import { OAuth2Client } from "google-auth-library";
 
 const router = Router();
 
@@ -23,6 +24,13 @@ const loginSchema = z.object({
 const guestLoginSchema = z.object({
   name: z.string().min(1).max(100),
 });
+
+const googleAuthSchema = z.object({
+  token: z.string().min(1),
+});
+
+// Initialize Google OAuth client
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 /**
  * @swagger
@@ -222,6 +230,114 @@ router.post("/guest", asyncHandler(async (req, res) => {
 
 /**
  * @swagger
+ * /api/auth/google:
+ *   post:
+ *     summary: Authenticate with Google OAuth
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Google ID token from client
+ *     responses:
+ *       200:
+ *         description: Google authentication successful
+ *       401:
+ *         description: Invalid Google token
+ */
+router.post("/google", asyncHandler(async (req, res) => {
+  const validated = googleAuthSchema.parse(req.body);
+  const { token } = validated;
+
+  try {
+    // Verify the Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+      return res.status(401).json({ error: "Invalid Google token" });
+    }
+
+    const { sub: googleId, email, name, picture } = payload;
+
+    if (!email || !name) {
+      return res.status(400).json({ error: "Missing required user information from Google" });
+    }
+
+    // Find or create user
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { googleId },
+          { email },
+        ],
+      },
+    });
+
+    if (user) {
+      // Update user if they logged in with email before and now using Google
+      if (!user.googleId && googleId) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            googleId,
+            profilePicture: picture || null,
+          },
+        });
+      } else if (user.googleId && picture && user.profilePicture !== picture) {
+        // Update profile picture if changed
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { profilePicture: picture },
+        });
+      }
+    } else {
+      // Create new user
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          googleId,
+          profilePicture: picture || null,
+        },
+      });
+    }
+
+    // Generate token
+    const jwtToken = generateToken({
+      userId: user.id,
+      ...(user.email && { email: user.email }),
+      name: user.name,
+    });
+
+    res.json({
+      message: "Google authentication successful",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        profilePicture: user.profilePicture,
+      },
+      token: jwtToken,
+    });
+  } catch (error) {
+    console.error("Google auth error:", error);
+    res.status(401).json({ error: "Invalid Google token" });
+  }
+}));
+
+/**
+ * @swagger
  * /api/auth/me:
  *   get:
  *     summary: Get current user info
@@ -245,6 +361,7 @@ router.get("/me", authenticate, asyncHandler(async (req: AuthRequest, res) => {
       id: true,
       name: true,
       email: true,
+      profilePicture: true,
       createdAt: true,
     },
   });
