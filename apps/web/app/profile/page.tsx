@@ -24,15 +24,14 @@ export default function ProfilePage() {
       return;
     }
 
-    // Fetch latest profile data
+    // Fetch latest profile data (best effort)
     getCurrentUser(token)
       .then(({ user }) => {
         setProfileData(user);
       })
       .catch((error) => {
+        // If this fails (e.g. network issue), keep showing existing profile data
         console.error("Failed to fetch profile:", error);
-        // If token is invalid, redirect to home
-        router.push("/");
       })
       .finally(() => {
         setLoading(false);

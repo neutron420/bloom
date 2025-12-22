@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -19,6 +19,8 @@ export default function LandingPage() {
   const [meetingCode, setMeetingCode] = useState("");
   const [activeNav, setActiveNav] = useState<"meetings" | "calls">("meetings");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleNewMeeting = () => {
     if (!isAuthenticated) {
@@ -44,8 +46,10 @@ export default function LandingPage() {
         <header className={styles.header}>
           <div className={styles.headerLeft}>
             <button 
+              ref={menuButtonRef}
               className={styles.menuButton}
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              aria-label="Toggle menu"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
@@ -128,7 +132,10 @@ export default function LandingPage() {
 
         <div className={styles.content}>
           {/* Sidebar */}
-          <aside className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ""}`}>
+          <aside 
+            ref={sidebarRef}
+            className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ""}`}
+          >
             <nav className={styles.nav}>
               <button 
                 className={`${styles.navItem} ${activeNav === "meetings" ? styles.navItemActive : ""}`}
