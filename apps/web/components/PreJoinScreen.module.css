@@ -480,19 +480,408 @@
   border-color: #c4c7c5;
 }
 
-/* Responsive */
+/* Mobile Optimizations */
 @media (max-width: 1024px) {
   .content {
     flex-direction: column;
-    padding: 16px;
+    padding: 20px;
+    gap: 24px;
   }
 
   .rightSection {
     flex: 1;
+    min-width: 0;
   }
 
   .videoPreview {
     max-width: 100%;
+  }
+
+  .joinCard {
+    padding: 32px 24px;
+  }
+
+  .joinTitle {
+    font-size: 28px;
+  }
+
+  .starIcon {
+    width: 72px;
+    height: 72px;
+    margin-bottom: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .header {
+    padding: 8px 16px;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+  }
+
+  .logoImage {
+    height: 28px;
+  }
+
+  .userInfo {
+    gap: 8px;
+  }
+
+  .userDetails {
+    display: none;
+  }
+
+  .userAvatar,
+  .userAvatarPlaceholder {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .switchAccount {
+    font-size: 11px;
+    padding: 2px 0;
+    min-height: 20px;
+  }
+
+  .content {
+    padding: 16px 12px;
+    gap: 20px;
+    min-height: calc(100vh - 56px);
+  }
+
+  .leftSection {
+    order: 2;
+    width: 100%;
+  }
+
+  .rightSection {
+    order: 1;
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .joinCard {
+    padding: 24px 20px;
+    max-width: 100%;
+  }
+
+  .starIcon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 20px;
+  }
+
+  .starIcon svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .joinTitle {
+    font-size: 24px;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .joinSubtitle {
+    font-size: 14px;
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+
+  .joinButton {
+    padding: 14px 24px;
+    font-size: 16px;
+    min-height: 52px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(255, 107, 53, 0.25);
+  }
+
+  .otherWaysButton {
+    padding: 12px 20px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .videoPreview {
+    margin-bottom: 16px;
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .deviceSelectors {
+    flex-direction: column;
+    gap: 10px;
+    max-width: 100%;
+  }
+
+  .deviceButton {
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 48px;
+    border-radius: 10px;
+  }
+
+  .deviceButton svg:first-child {
+    width: 20px;
+    height: 20px;
+  }
+
+  .deviceButtonText {
+    font-size: 14px;
+  }
+
+  .deviceButton svg:last-child {
+    width: 18px;
+    height: 18px;
+  }
+
+  .deviceDropdown {
+    max-height: 180px;
+    border-radius: 10px;
+  }
+
+  .deviceDropdownItem {
+    padding: 14px 16px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .videoControls {
+    padding: 16px 12px;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .controlButton {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  .controlButton svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .userName {
+    font-size: 14px;
+    padding: 5px 12px;
+    border-radius: 6px;
+  }
+
+  .menuButton {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .menuButton svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .videoOverlay {
+    padding: 12px;
+  }
+
+  .cameraOffIcon svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .cameraOffText {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 8px 12px;
+    height: 52px;
+  }
+
+  .logoImage {
+    height: 24px;
+  }
+
+  .userAvatar,
+  .userAvatarPlaceholder {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  .content {
+    padding: 12px 8px;
+    gap: 16px;
+    min-height: calc(100vh - 52px);
+  }
+
+  .joinCard {
+    padding: 20px 16px;
+  }
+
+  .starIcon {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 16px;
+  }
+
+  .starIcon svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  .joinTitle {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .joinSubtitle {
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+
+  .joinButton {
+    padding: 12px 20px;
+    font-size: 15px;
+    min-height: 48px;
+  }
+
+  .otherWaysButton {
+    padding: 10px 18px;
+    font-size: 13px;
+    min-height: 40px;
+  }
+
+  .videoPreview {
+    margin-bottom: 12px;
+    border-radius: 10px;
+  }
+
+  .deviceSelectors {
+    gap: 8px;
+  }
+
+  .deviceButton {
+    padding: 10px 14px;
+    font-size: 13px;
+    min-height: 44px;
+  }
+
+  .deviceButton svg:first-child {
+    width: 18px;
+    height: 18px;
+  }
+
+  .deviceButtonText {
+    font-size: 13px;
+  }
+
+  .deviceButton svg:last-child {
+    width: 16px;
+    height: 16px;
+  }
+
+  .deviceDropdown {
+    max-height: 160px;
+  }
+
+  .deviceDropdownItem {
+    padding: 12px 14px;
+    font-size: 13px;
+    min-height: 40px;
+  }
+
+  .videoControls {
+    padding: 12px 8px;
+    gap: 10px;
+  }
+
+  .controlButton {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .controlButton svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .userName {
+    font-size: 13px;
+    padding: 4px 10px;
+  }
+
+  .menuButton {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  .menuButton svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .cameraOffIcon svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  .cameraOffText {
+    font-size: 16px;
+  }
+
+  .videoOverlay {
+    padding: 10px;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 360px) {
+  .joinTitle {
+    font-size: 20px;
+  }
+
+  .joinSubtitle {
+    font-size: 12px;
+  }
+
+  .joinButton {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  .deviceButton {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .controlButton {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
   }
 }
 

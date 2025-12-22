@@ -17,19 +17,60 @@ export default function MeetPage() {
 
   const roomId = params?.roomId as string;
 
-  // Set name and show prejoin directly - skip name input
+  // Set name and decide whether to show prejoin or auto-join (cached)
   useEffect(() => {
-    if (!authLoading) {
-      const userName = user?.name || "Guest";
-      setName(userName);
-      setShowPreJoin(true);
+    if (authLoading) return;
+
+    const userName = user?.name || "Guest";
+    setName(userName);
+
+    // Try to auto-join if we have cached meeting data for this room
+    if (typeof window !== "undefined") {
+      try {
+        const cached = window.localStorage.getItem("bloom_last_meeting");
+        if (cached) {
+          const data = JSON.parse(cached) as {
+            roomId: string;
+            userName: string;
+            joinedAt?: number;
+          };
+
+          if (data.roomId === roomId && data.userName === userName) {
+            // Auto-join directly into MeetingRoom; it will recreate media stream
+            setShowPreJoin(false);
+            setHasJoined(true);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Failed to read cached meeting info:", error);
+      }
     }
-  }, [user, authLoading]);
+
+    // Default: show prejoin screen
+    setShowPreJoin(true);
+  }, [user, authLoading, roomId]);
 
   const handlePreJoinJoin = (stream: MediaStream) => {
     setPreJoinStream(stream);
     setShowPreJoin(false);
     setHasJoined(true);
+
+    // Cache last joined meeting so refresh can auto-join
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(
+          "bloom_last_meeting",
+          JSON.stringify({
+            roomId,
+            userName: name || "Guest",
+            joinedAt: Date.now(),
+          }),
+        );
+      } catch (error) {
+        console.error("Failed to cache meeting info:", error);
+      }
+    }
   };
 
   if (!roomId) {

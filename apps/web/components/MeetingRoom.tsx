@@ -460,6 +460,41 @@ export default function MeetingRoom({ roomId, userName, token, initialStream }: 
     initializeMediaSoup();
   }, []);
 
+  // Load cached media preferences (audio/video) on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const stored = window.localStorage.getItem("bloom_media_prefs");
+      if (stored) {
+        const prefs = JSON.parse(stored) as { video?: boolean; audio?: boolean };
+        if (typeof prefs.video === "boolean") {
+          setIsVideoEnabled(prefs.video);
+        }
+        if (typeof prefs.audio === "boolean") {
+          setIsAudioEnabled(prefs.audio);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to read media preferences from cache:", error);
+    }
+  }, []);
+
+  // Persist media preferences whenever they change
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        "bloom_media_prefs",
+        JSON.stringify({
+          video: isVideoEnabled,
+          audio: isAudioEnabled,
+        }),
+      );
+    } catch (error) {
+      console.error("Failed to save media preferences to cache:", error);
+    }
+  }, [isVideoEnabled, isAudioEnabled]);
+
   // Set initial stream immediately if available (before MediaSoup initialization)
   useEffect(() => {
     if (initialStream && !localStream) {
@@ -644,6 +679,16 @@ export default function MeetingRoom({ roomId, userName, token, initialStream }: 
     if (socket) {
       socket.disconnect();
     }
+
+    // Clear cached meeting so refresh doesn't auto-join after leaving
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem("bloom_last_meeting");
+      } catch (error) {
+        console.error("Failed to clear cached meeting info:", error);
+      }
+    }
+
     router.push("/");
   };
 

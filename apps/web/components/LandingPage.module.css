@@ -453,26 +453,379 @@
   max-width: 400px;
 }
 
+/* Mobile Optimizations */
 @media (max-width: 768px) {
-  .sidebar {
+  .container {
+    position: relative;
+  }
+
+  .header {
+    padding: 8px 16px;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .headerLeft {
+    gap: 12px;
+  }
+
+  .menuButton {
+    padding: 6px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .menuButton svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .logoImage {
+    height: 28px;
+  }
+
+  .headerRight {
+    gap: 4px;
+  }
+
+  .time {
     display: none;
+  }
+
+  /* Hide help, settings, apps buttons on mobile */
+  .iconButton:nth-of-type(1),
+  .iconButton:nth-of-type(2),
+  .iconButton:nth-of-type(3) {
+    display: none;
+  }
+
+  .iconButton {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .signInButton {
+    padding: 10px 18px;
+    font-size: 14px;
+    min-height: 40px;
+    white-space: nowrap;
+  }
+
+  .avatarButton {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .avatar {
+    font-size: 13px;
+  }
+
+  .content {
+    position: relative;
+  }
+
+  /* Sidebar overlay for mobile */
+  .sidebarOverlay {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 56px;
+    height: calc(100vh - 56px);
+    width: 280px;
+    max-width: 85vw;
+    background: #ffffff;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.15);
+    overflow-y: auto;
+  }
+
+  .sidebar:not(.sidebarCollapsed) {
+    transform: translateX(0);
+  }
+
+  .navItem {
+    padding: 14px 20px;
+    min-height: 48px;
+    font-size: 15px;
+  }
+
+  .navItem svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .main {
+    padding: 32px 20px 24px;
+    width: 100%;
+  }
+
+  .hero {
+    max-width: 100%;
+    width: 100%;
   }
 
   .title {
     font-size: 32px;
+    line-height: 1.25;
+    margin-bottom: 12px;
+    letter-spacing: -0.3px;
   }
 
   .subtitle {
     font-size: 16px;
+    margin-bottom: 36px;
+    line-height: 1.5;
+    padding: 0 4px;
+  }
+
+  .actions {
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .primaryButton {
+    padding: 16px 24px;
+    font-size: 16px;
+    max-width: 100%;
+    min-height: 52px;
+    gap: 10px;
+    box-shadow: 0 2px 4px rgba(255, 107, 53, 0.25);
+  }
+
+  .primaryButton svg {
+    width: 20px;
+    height: 20px;
   }
 
   .joinInput {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    padding: 12px 16px;
+    max-width: 100%;
+    min-height: 52px;
+    border-radius: 28px;
+  }
+
+  .joinInput svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .joinInput input {
+    font-size: 16px;
+    padding: 0 4px;
   }
 
   .joinButton {
-    width: 100%;
+    padding: 8px 20px;
+    font-size: 15px;
+    white-space: nowrap;
+    min-height: 36px;
+    border-radius: 18px;
+  }
+
+  .separator {
+    margin: 32px 0 28px;
+    max-width: 100%;
+  }
+
+  .illustration {
+    margin-top: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 8px 12px;
+    height: 52px;
+  }
+
+  .headerLeft {
+    gap: 10px;
+  }
+
+  .menuButton {
+    padding: 5px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .menuButton svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .logoImage {
+    height: 24px;
+  }
+
+  .iconButton {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px;
+  }
+
+  .iconButton svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .signInButton {
+    padding: 8px 16px;
+    font-size: 13px;
+    min-height: 36px;
+  }
+
+  .avatarButton {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  .avatar {
+    font-size: 12px;
+  }
+
+  .sidebarOverlay {
+    top: 52px;
+  }
+
+  .sidebar {
+    top: 52px;
+    height: calc(100vh - 52px);
+    width: 260px;
+  }
+
+  .navItem {
+    padding: 12px 18px;
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .navItem svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .main {
+    padding: 24px 16px 20px;
+  }
+
+  .title {
+    font-size: 26px;
+    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    margin-bottom: 32px;
+    line-height: 1.5;
+  }
+
+  .actions {
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .primaryButton {
+    padding: 14px 20px;
+    font-size: 15px;
+    min-height: 48px;
+    gap: 8px;
+  }
+
+  .primaryButton svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .joinInput {
+    padding: 10px 14px;
+    min-height: 48px;
+    border-radius: 24px;
+  }
+
+  .joinInput svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .joinInput input {
+    font-size: 15px;
+  }
+
+  .joinButton {
+    padding: 6px 16px;
+    font-size: 14px;
+    min-height: 32px;
+    border-radius: 16px;
+  }
+
+  .separator {
+    margin: 28px 0 24px;
+  }
+
+  .illustration {
+    margin-top: 32px;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 360px) {
+  .header {
+    padding: 6px 10px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+
+  .primaryButton {
+    padding: 12px 18px;
+    font-size: 14px;
+  }
+
+  .joinInput {
+    padding: 8px 12px;
+  }
+
+  .joinButton {
+    padding: 6px 14px;
+    font-size: 13px;
   }
 }
 
