@@ -2,8 +2,8 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import MeetingRoom from "../../../components/MeetingRoom";
-import PreJoinScreen from "../../../components/PreJoinScreen";
+import { MeetingRoom } from "../../../components/MeetingRoom";
+import { PreJoinScreen } from "../../../components/PreJoinScreen";
 import { useAuth } from "../../../contexts/AuthContext";
 
 export default function MeetPage() {
@@ -51,10 +51,10 @@ export default function MeetPage() {
     setShowPreJoin(true);
   }, [user, authLoading, roomId]);
 
-  const handlePreJoinJoin = (stream: MediaStream) => {
-    setPreJoinStream(stream);
+  const handlePreJoinJoin = (joinName: string) => {
     setShowPreJoin(false);
     setHasJoined(true);
+    setName(joinName);
 
     // Cache last joined meeting so refresh can auto-join
     if (typeof window !== "undefined") {
@@ -63,7 +63,7 @@ export default function MeetPage() {
           "bloom_last_meeting",
           JSON.stringify({
             roomId,
-            userName: name || "Guest",
+            userName: joinName || "Guest",
             joinedAt: Date.now(),
           }),
         );
@@ -94,14 +94,15 @@ export default function MeetPage() {
     return (
       <PreJoinScreen
         roomId={roomId}
-        userName={name}
+        initialName={name}
         onJoin={handlePreJoinJoin}
+        onBack={() => router.push("/")}
       />
     );
   }
 
   if (hasJoined) {
-    return <MeetingRoom roomId={roomId} userName={name} token={token} initialStream={preJoinStream} />;
+    return <MeetingRoom roomId={roomId} userName={name} />;
   }
 
   return null;
