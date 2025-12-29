@@ -164,7 +164,7 @@ async function handleGetChatHistory(
     });
 
     // Reverse to show oldest first
-    const chatHistory = messages.reverse().map((msg) => ({
+    const chatHistory = messages.reverse().map((msg: typeof messages[0]) => ({
       id: msg.id,
       userId: msg.userId,
       userName: msg.user.name,

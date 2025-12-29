@@ -73,7 +73,7 @@ router.get("/meetings/:roomId/chat", optionalAuth, asyncHandler(async (req: Auth
       take: Math.min(limit, 100), // Max 100 messages
     });
 
-    const chatHistory = messages.map((msg) => ({
+    const chatHistory = messages.map((msg: typeof messages[0]) => ({
       id: msg.id,
       userId: msg.userId,
       userName: msg.user.name,

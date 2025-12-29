@@ -128,7 +128,7 @@ async function handleJoinRequest(
       });
 
       // Find host sockets and notify them
-      const hostSockets = findHostSockets(io, meeting.id, hosts.map(h => h.userId));
+      const hostSockets = findHostSockets(io, meeting.id, hosts.map((h: typeof hosts[0]) => h.userId));
       
       hostSockets.forEach(hostSocket => {
         hostSocket.emit("new-join-request", {
@@ -235,7 +235,7 @@ async function handleApproveRequest(
       },
     });
 
-    const hostSockets = findHostSockets(io, joinRequest.meetingId, hosts.map(h => h.userId));
+    const hostSockets = findHostSockets(io, joinRequest.meetingId, hosts.map((h: typeof hosts[0]) => h.userId));
     hostSockets.forEach(hostSocket => {
       hostSocket.emit("request-processed", {
         requestId,
@@ -313,7 +313,7 @@ async function handleDeclineRequest(
       },
     });
 
-    const hostSockets = findHostSockets(io, joinRequest.meetingId, hosts.map(h => h.userId));
+    const hostSockets = findHostSockets(io, joinRequest.meetingId, hosts.map((h: typeof hosts[0]) => h.userId));
     hostSockets.forEach(hostSocket => {
       hostSocket.emit("request-processed", {
         requestId,
@@ -374,7 +374,7 @@ async function handleGetPendingRequests(
     });
 
     socket.emit("pending-requests", {
-      requests: pendingRequests.map(req => ({
+      requests: pendingRequests.map((req: typeof pendingRequests[0]) => ({
         id: req.id,
         userId: req.userId,
         name: req.user.name,
