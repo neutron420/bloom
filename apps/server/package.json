@@ -11,7 +11,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "create-admin": "tsx scripts/create-admin.ts"
   },
   "keywords": [],
   "author": "",

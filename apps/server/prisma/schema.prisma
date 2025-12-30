@@ -16,6 +16,17 @@ model User {
   password       String?  // Hashed password for authentication
   googleId       String?  @unique // Google OAuth ID
   profilePicture String?  // Profile picture URL
+  isAdmin        Boolean  @default(false) // Admin access flag
+  adminAssignedAt DateTime? // When admin status was assigned
+  adminAssignedBy String?  // ID of admin who assigned this role (self-reference)
+  suspended      Boolean  @default(false) // User suspension flag
+  suspendedAt    DateTime? // When user was suspended
+  suspendedBy    String?  // Admin ID who suspended
+  suspensionReason String? // Reason for suspension
+  flagged       Boolean  @default(false) // User flagged for review
+  flaggedAt     DateTime? // When user was flagged
+  flaggedBy     String?  // Admin ID who flagged
+  flagReason    String?  // Reason for flagging
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   
@@ -27,7 +38,22 @@ model User {
   
   @@index([name])
   @@index([email])
+  @@index([isAdmin])
+  @@index([suspended])
+  @@index([flagged])
   @@map("users")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String   // Hashed password for authentication
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([email])
+  @@map("admins")
 }
 
 model Meeting {
@@ -123,5 +149,75 @@ model ScreenShare {
   @@index([meetingId, isActive]) // Optimize queries for active screen shares
   @@index([userId])
   @@map("screen_shares")
+}
+
+model AdminActivityLog {
+  id        String   @id @default(cuid())
+  adminId   String   // Admin who performed action
+  action    String   // Action type (e.g., "user_deleted", "meeting_ended")
+  targetType String? // Type of target (user, meeting, etc.)
+  targetId  String? // ID of target
+  details   String?  // JSON string for additional details
+  ipAddress String?
+  createdAt DateTime @default(now())
+  
+  @@index([adminId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("admin_activity_logs")
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String?
+  ipAddress String
+  success   Boolean
+  userAgent String?
+  createdAt DateTime @default(now())
+  
+  @@index([email])
+  @@index([ipAddress])
+  @@index([createdAt])
+  @@index([success])
+  @@map("login_attempts")
+}
+
+model BlockedIP {
+  id        String   @id @default(cuid())
+  ipAddress String   @unique
+  reason    String?
+  expiresAt DateTime?
+  blockedBy String?  // Admin ID
+  createdAt DateTime @default(now())
+  
+  @@index([ipAddress])
+  @@index([expiresAt])
+  @@map("blocked_ips")
+}
+
+model SystemSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   // JSON string for complex values
+  updatedAt DateTime @updatedAt
+  updatedBy String?  // Admin ID
+  
+  @@map("system_settings")
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  targetType String  @default("all") // all, specific_users
+  targetUserIds String? // JSON array of user IDs if targetType is specific_users
+  createdBy String   // Admin ID
+  createdAt DateTime @default(now())
+  expiresAt DateTime?
+  isActive  Boolean  @default(true)
+  
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("announcements")
 }
 

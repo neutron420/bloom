@@ -23,8 +23,14 @@ export function generateToken(payload: JWTPayload): string {
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload;
-  } catch (error) {
+    const secret = process.env.JWT_SECRET;
+    if (!secret || secret === "your-secret-key-change-in-production") {
+      console.error("[Auth] JWT_SECRET not set or using default");
+      return null;
+    }
+    return jwt.verify(token, secret) as JWTPayload;
+  } catch (error: any) {
+    console.error("[Auth] Token verification error:", error.message);
     return null;
   }
 }

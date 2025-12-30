@@ -5,6 +5,7 @@ import { canJoinRoom, broadcastParticipants } from "../utils/roomManager.js";
 import { MAX_ROOM_ID_LENGTH, MAX_NAME_LENGTH } from "../config/constants.js";
 import { checkRequestRateLimit, clearSocketRateLimit } from "../utils/socketRateLimit.js";
 import { JoinRequestStatus } from "@prisma/client";
+import { getAdminNamespace, emitNewJoinRequest } from "../admin-be/handlers/adminHandlers.js";
 
 export function setupJoinRequestHandlers(io: Server, socket: Socket): void {
   // Cleanup rate limits on disconnect
@@ -141,6 +142,18 @@ async function handleJoinRequest(
       });
 
       console.log(`Join request created: ${user.name} requested to join ${meeting.roomId}`);
+
+      // Emit admin event
+      const adminNamespace = getAdminNamespace(io);
+      if (adminNamespace) {
+        emitNewJoinRequest(adminNamespace, {
+          requestId: joinRequest.id,
+          userId: user.id,
+          userName: user.name,
+          meetingId: meeting.id,
+          roomId: meeting.roomId,
+        });
+      }
     } else {
       // No approval needed, join directly
       socket.emit("request-approved", {

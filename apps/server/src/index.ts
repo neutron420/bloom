@@ -8,6 +8,8 @@ import healthRoutes from "./routes/health.js";
 import meetingSettingsRoutes from "./routes/meetingSettings.js";
 import chatRoutes from "./routes/chat.js";
 import authRoutes from "./routes/auth.js";
+import { setupAdminRoutes } from "./admin-be/routes/adminRoutes.js";
+import { setupAdminNamespace } from "./admin-be/handlers/adminHandlers.js";
 import { setupSwagger } from "./config/swagger.js";
 import { setupGracefulShutdown } from "./utils/shutdown.js";
 import { setupErrorHandler } from "./middleware/index.js";
@@ -40,6 +42,9 @@ createWorkers()
 // Setup Socket.IO handlers
 setupSocketHandlers(io);
 
+// Setup Admin Socket.IO namespace
+setupAdminNamespace(io);
+
 // Swagger API Documentation
 setupSwagger(app);
 
@@ -48,6 +53,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api", apiRoutes);
 app.use("/api", meetingSettingsRoutes);
 app.use("/api", chatRoutes);
+
+// Admin Routes
+app.use("/api/admin", setupAdminRoutes(io));
 
 // Health and Stats Routes
 app.use("/", healthRoutes);

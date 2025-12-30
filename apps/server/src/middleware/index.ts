@@ -18,8 +18,40 @@ export function setupMiddleware(app: express.Application): void {
   // Compression for API responses
   app.use(compression());
 
-  // CORS
-  app.use(cors());
+  // CORS - Allow admin frontend and main frontend
+  const allowedOrigins = [
+    "http://localhost:3000",  // Main frontend
+    "http://localhost:3003",  // Admin frontend
+    process.env.FRONTEND_URL,
+    process.env.ADMIN_FRONTEND_URL,
+  ].filter(Boolean) as string[];
+
+  app.use(cors({
+    origin: (origin, callback) => {
+      // In development, allow all localhost origins
+      if (process.env.NODE_ENV === "development") {
+        if (!origin || origin.includes("localhost") || origin.includes("127.0.0.1")) {
+          return callback(null, true);
+        }
+      }
+      
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+      
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    exposedHeaders: ["Content-Type", "Authorization"],
+  }));
 
   // Body parsing with size limits
   app.use(express.json({ limit: "10mb" }));

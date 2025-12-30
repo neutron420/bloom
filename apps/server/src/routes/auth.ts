@@ -342,6 +342,72 @@ router.post("/google", asyncHandler(async (req, res) => {
 
 /**
  * @swagger
+ * /api/auth/admin/login:
+ *   post:
+ *     summary: Admin login (requires isAdmin = true)
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Admin login successful
+ *       401:
+ *         description: Invalid credentials
+ *       403:
+ *         description: User is not an admin
+ */
+router.post("/admin/login", asyncHandler(async (req, res) => {
+  const validated = loginSchema.parse(req.body);
+  const { email, password } = validated;
+
+  // Find admin in Admin table
+  const admin = await prisma.admin.findUnique({
+    where: { email },
+  });
+
+  if (!admin) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  // Verify password
+  const isValid = await comparePassword(password, admin.password);
+  if (!isValid) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  // Generate token
+  const token = generateToken({
+    userId: admin.id,
+    email: admin.email,
+    name: admin.name,
+  });
+
+  res.json({
+    message: "Admin login successful",
+    user: {
+      id: admin.id,
+      name: admin.name,
+      email: admin.email,
+      isAdmin: true,
+    },
+    token,
+  });
+}));
+
+/**
+ * @swagger
  * /api/auth/me:
  *   get:
  *     summary: Get current user info
@@ -366,6 +432,7 @@ router.get("/me", authenticate, asyncHandler(async (req: AuthRequest, res) => {
       name: true,
       email: true,
       profilePicture: true,
+      isAdmin: true,
       createdAt: true,
     },
   });

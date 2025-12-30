@@ -10,6 +10,7 @@ import { setupScreenShareHandlers } from "./screenShareHandlers.js";
 import { setupWebRTCHandlers } from "./webrtcHandlers.js";
 import { logger } from "../utils/logger.js";
 import type { AuthenticatedSocket } from "../middleware/socketAuth.js";
+import { getAdminNamespace, emitUserJoined, emitUserLeft, emitNewMeeting } from "../admin-be/handlers/adminHandlers.js";
 
 export function setupSocketHandlers(io: Server): void {
   io.on("connection", (socket: Socket) => {
@@ -157,6 +158,27 @@ async function handleJoinRoom(
 
     // Debounce broadcast to others
     broadcastParticipants(io, roomId);
+
+    // Emit admin events
+    const adminNamespace = getAdminNamespace(io);
+    if (adminNamespace) {
+      emitUserJoined(adminNamespace, {
+        userId: user.id,
+        userName: user.name,
+        roomId: roomId,
+        meetingId: meeting.id,
+      });
+
+      // If this is a new meeting, emit new meeting event
+      if (isFirstUser) {
+        emitNewMeeting(adminNamespace, {
+          meetingId: meeting.id,
+          roomId: meeting.roomId,
+          ...(meeting.title && { title: meeting.title }),
+          createdBy: user.id,
+        });
+      }
+    }
   } catch (error) {
     logger.error("Error joining room", { error, socketId: socket.id, roomId });
     socket.emit("error", { message: "Failed to join room" });
@@ -226,6 +248,17 @@ async function handleDisconnect(io: Server, socket: Socket): Promise<void> {
         userName: connection.name,
         roomId: connection.roomId,
       });
+
+      // Emit admin event
+      const adminNamespace = getAdminNamespace(io);
+      if (adminNamespace) {
+        emitUserLeft(adminNamespace, {
+          userId: connection.userId,
+          userName: connection.name,
+          roomId: connection.roomId,
+          meetingId: connection.meetingDbId,
+        });
+      }
     } catch (error) {
       logger.error("Error updating participant", { error, userId: connection.userId });
     }
