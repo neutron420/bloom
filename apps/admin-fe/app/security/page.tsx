@@ -84,7 +84,7 @@ export default function SecurityPage() {
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
       
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col ml-64">
         <header className="bg-white border-b border-gray-200">
           <div className="px-8 py-6">
             <h1 className="text-2xl font-semibold text-gray-900">Security</h1>

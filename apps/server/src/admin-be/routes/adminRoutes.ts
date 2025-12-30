@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { Server } from "socket.io";
 import { prisma } from "../../lib/prisma.js";
 import { requireAdmin } from "../middleware/adminAuth.js";
@@ -3698,6 +3698,350 @@ router.get("/moderation/queue", asyncHandler(async (req: AdminRequest, res) => {
       flaggedMessages: flaggedMessages.length,
       total: flaggedUsers.length + flaggedMessages.length,
     },
+  });
+}));
+
+// ============================================================================
+// MAIN ADMIN: ADMIN MANAGEMENT
+// ============================================================================
+
+/**
+ * Helper to check if admin is main admin
+ */
+function requireMainAdmin(req: AdminRequest, res: Response): boolean {
+  // Check both isMainAdmin flag and role
+  const isMainAdmin = req.admin?.isMainAdmin === true || req.admin?.role === "MAIN_ADMIN";
+  
+  if (!isMainAdmin) {
+    logger.warn("requireMainAdmin - Access denied", { 
+      adminId: req.admin?.userId,
+      isMainAdmin: req.admin?.isMainAdmin,
+      role: req.admin?.role 
+    });
+    res.status(403).json({ error: "Main admin access required" });
+    return false;
+  }
+  return true;
+}
+
+/**
+ * GET /api/admin/admins
+ * Get all admins except main admin (main admin only)
+ */
+router.get("/admins", asyncHandler(async (req: AdminRequest, res) => {
+  logger.info("GET /api/admin/admins - Request received", { 
+    adminId: req.admin?.userId,
+    isMainAdmin: req.admin?.isMainAdmin,
+    role: req.admin?.role 
+  });
+  
+  if (!requireMainAdmin(req, res)) {
+    logger.warn("GET /api/admin/admins - Main admin access required", { 
+      adminId: req.admin?.userId,
+      isMainAdmin: req.admin?.isMainAdmin,
+      role: req.admin?.role 
+    });
+    return;
+  }
+
+  const admins = await prisma.admin.findMany({
+    where: {
+      NOT: {
+        role: "MAIN_ADMIN", // Get all admins except main admin (includes SUPER_ADMIN, null, or any other role)
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isActive: true,
+      createdBy: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  res.json({
+    admins,
+    total: admins.length,
+    active: admins.filter(a => a.isActive).length,
+    inactive: admins.filter(a => !a.isActive).length,
+  });
+}));
+
+/**
+ * POST /api/admin/admins
+ * Create a new admin (main admin only)
+ */
+router.post("/admins", asyncHandler(async (req: AdminRequest, res) => {
+  logger.info("POST /api/admin/admins - Request received", { 
+    body: { name: req.body?.name, email: req.body?.email },
+    adminId: req.admin?.userId,
+    isMainAdmin: req.admin?.isMainAdmin 
+  });
+  
+  if (!requireMainAdmin(req, res)) {
+    logger.warn("POST /api/admin/admins - Main admin access required", { 
+      adminId: req.admin?.userId,
+      isMainAdmin: req.admin?.isMainAdmin 
+    });
+    return;
+  }
+
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: "Name, email, and password are required" });
+  }
+
+  // Check if admin already exists
+  const existing = await prisma.admin.findUnique({
+    where: { email },
+  });
+
+  if (existing) {
+    return res.status(409).json({ error: "Admin with this email already exists" });
+  }
+
+  // Hash password
+  const { hashPassword } = await import("../../utils/auth.js");
+  const hashedPassword = await hashPassword(password);
+
+  // Create admin
+  const newAdmin = await prisma.admin.create({
+    data: {
+      name,
+      email,
+      password: hashedPassword,
+      role: "SUPER_ADMIN", // Default role for new admins
+      isActive: true,
+      createdBy: req.admin?.userId || null,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+    },
+  });
+
+  await logAdminActivity(
+    req.admin?.userId || "unknown",
+    "admin_created",
+    "admin",
+    newAdmin.id,
+    { email: newAdmin.email, name: newAdmin.name },
+    req.ip
+  );
+
+  logger.info(`Admin created by main admin`, { 
+    adminId: newAdmin.id, 
+    createdBy: req.admin?.userId 
+  });
+
+  res.status(201).json({
+    message: "Admin created successfully",
+    admin: newAdmin,
+  });
+}));
+
+/**
+ * PATCH /api/admin/admins/:id/toggle
+ * Toggle admin active status (main admin only)
+ */
+router.patch("/admins/:id/toggle", asyncHandler(async (req: AdminRequest, res) => {
+  if (!requireMainAdmin(req, res)) return;
+
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ error: "Admin ID is required" });
+  }
+
+  // Prevent main admin from deactivating themselves
+  if (id === req.admin?.userId) {
+    return res.status(400).json({ error: "Cannot deactivate yourself" });
+  }
+
+  const admin = await prisma.admin.findUnique({
+    where: { id },
+  });
+
+  if (!admin) {
+    return res.status(404).json({ error: "Admin not found" });
+  }
+
+  if (admin.role === "MAIN_ADMIN") {
+    return res.status(403).json({ error: "Cannot modify main admin" });
+  }
+
+  const updatedAdmin = await prisma.admin.update({
+    where: { id },
+    data: {
+      isActive: !admin.isActive,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isActive: true,
+      updatedAt: true,
+    },
+  });
+
+  await logAdminActivity(
+    req.admin?.userId || "unknown",
+    admin.isActive ? "admin_deactivated" : "admin_activated",
+    "admin",
+    id,
+    { email: admin.email, name: admin.name, isActive: updatedAdmin.isActive },
+    req.ip
+  );
+
+  logger.info(`Admin ${admin.isActive ? "deactivated" : "activated"} by main admin`, { 
+    adminId: id, 
+    mainAdminId: req.admin?.userId 
+  });
+
+  res.json({
+    message: `Admin ${updatedAdmin.isActive ? "activated" : "deactivated"} successfully`,
+    admin: updatedAdmin,
+  });
+}));
+
+/**
+ * DELETE /api/admin/admins/:id
+ * Delete an admin (main admin only)
+ */
+router.delete("/admins/:id", asyncHandler(async (req: AdminRequest, res) => {
+  if (!requireMainAdmin(req, res)) return;
+
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ error: "Admin ID is required" });
+  }
+
+  // Prevent main admin from deleting themselves
+  if (id === req.admin?.userId) {
+    return res.status(400).json({ error: "Cannot delete yourself" });
+  }
+
+  const admin = await prisma.admin.findUnique({
+    where: { id },
+  });
+
+  if (!admin) {
+    return res.status(404).json({ error: "Admin not found" });
+  }
+
+  if (admin.role === "MAIN_ADMIN") {
+    return res.status(403).json({ error: "Cannot delete main admin" });
+  }
+
+  await prisma.admin.delete({
+    where: { id },
+  });
+
+  await logAdminActivity(
+    req.admin?.userId || "unknown",
+    "admin_deleted",
+    "admin",
+    id,
+    { email: admin.email, name: admin.name },
+    req.ip
+  );
+
+  logger.info(`Admin deleted by main admin`, { 
+    adminId: id, 
+    mainAdminId: req.admin?.userId 
+  });
+
+  res.json({
+    message: "Admin deleted successfully",
+  });
+}));
+
+/**
+ * PATCH /api/admin/admins/:id
+ * Update admin details (main admin only)
+ */
+router.patch("/admins/:id", asyncHandler(async (req: AdminRequest, res) => {
+  if (!requireMainAdmin(req, res)) return;
+
+  const { id } = req.params;
+  const { name, email, password } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ error: "Admin ID is required" });
+  }
+
+  const admin = await prisma.admin.findUnique({
+    where: { id },
+  });
+
+  if (!admin) {
+    return res.status(404).json({ error: "Admin not found" });
+  }
+
+  if (admin.role === "MAIN_ADMIN") {
+    return res.status(403).json({ error: "Cannot modify main admin" });
+  }
+
+  const updateData: any = {};
+  if (name !== undefined) updateData.name = name;
+  if (email !== undefined) {
+    // Check email uniqueness
+    const existing = await prisma.admin.findUnique({
+      where: { email },
+    });
+    if (existing && existing.id !== id) {
+      return res.status(409).json({ error: "Email already in use" });
+    }
+    updateData.email = email;
+  }
+  if (password !== undefined) {
+    const { hashPassword } = await import("../../utils/auth.js");
+    updateData.password = await hashPassword(password);
+  }
+
+  const updatedAdmin = await prisma.admin.update({
+    where: { id },
+    data: updateData,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isActive: true,
+      updatedAt: true,
+    },
+  });
+
+  await logAdminActivity(
+    req.admin?.userId || "unknown",
+    "admin_updated",
+    "admin",
+    id,
+    updateData,
+    req.ip
+  );
+
+  logger.info(`Admin updated by main admin`, { 
+    adminId: id, 
+    mainAdminId: req.admin?.userId 
+  });
+
+  res.json({
+    message: "Admin updated successfully",
+    admin: updatedAdmin,
   });
 }));
 

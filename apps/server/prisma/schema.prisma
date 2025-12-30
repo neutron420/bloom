@@ -44,15 +44,25 @@ model User {
   @@map("users")
 }
 
+enum AdminRole {
+  MAIN_ADMIN
+  SUPER_ADMIN
+}
+
 model Admin {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
-  email     String   @unique
-  password  String   // Hashed password for authentication
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  email     String    @unique
+  password  String    // Hashed password for authentication
+  role      AdminRole @default(SUPER_ADMIN) // MAIN_ADMIN or SUPER_ADMIN
+  isActive  Boolean   @default(true) // Can be deactivated by main admin
+  createdBy String?   // ID of main admin who created this admin
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   
   @@index([email])
+  @@index([role])
+  @@index([isActive])
   @@map("admins")
 }
 

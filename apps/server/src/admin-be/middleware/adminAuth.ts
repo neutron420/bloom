@@ -10,6 +10,8 @@ export interface AdminRequest extends AuthRequest {
     email?: string;
     name: string;
     isAdmin: boolean;
+    isMainAdmin?: boolean;
+    role?: string;
   };
 }
 
@@ -40,7 +42,7 @@ export const requireAdmin = asyncHandler(
     // Check if admin exists in Admin table
     const admin = await prisma.admin.findUnique({
       where: { id: payload.userId },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true, email: true, role: true, isActive: true },
     });
 
     if (!admin) {
@@ -56,13 +58,23 @@ export const requireAdmin = asyncHandler(
       return;
     }
 
-    console.log("[AdminAuth] Admin authenticated:", admin.email);
+    if (!admin.isActive) {
+      res.status(403).json({ 
+        error: "Admin account is deactivated",
+        details: "Your admin account has been deactivated. Please contact the main admin."
+      });
+      return;
+    }
+
+    console.log("[AdminAuth] Admin authenticated:", admin.email, "Role:", admin.role);
 
     req.admin = {
       userId: admin.id,
       email: admin.email,
       name: admin.name,
       isAdmin: true,
+      isMainAdmin: admin.role === "MAIN_ADMIN",
+      role: admin.role,
     };
 
     req.user = payload; // Also set user for compatibility

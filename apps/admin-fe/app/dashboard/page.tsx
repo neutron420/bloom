@@ -6,13 +6,13 @@ import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { adminApi } from "@/lib/adminApi";
 import { Sidebar } from "@/components/Sidebar";
 import { StatCard } from "@/components/StatCard";
-import { Users, Calendar, Activity, TrendingUp } from "lucide-react";
+import { Users, Calendar, Activity, TrendingUp, LogOut } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts";
 
 const COLORS = ['#2563eb', '#7c3aed', '#dc2626', '#ea580c', '#059669'];
 
 export default function DashboardPage() {
-  const { isAuthenticated, user, loading: authLoading } = useAdminAuth();
+  const { isAuthenticated, user, loading: authLoading, logout } = useAdminAuth();
   const router = useRouter();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -73,20 +73,44 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
       
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col ml-64">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200">
-          <div className="px-8 py-6">
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+          <div className="px-8 py-4">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
                 <p className="text-sm text-gray-600 mt-1">Welcome back, {user?.name}</p>
               </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-500">Last updated</p>
-                <p className="text-sm font-medium text-gray-900">
-                  {stats?.timestamp ? new Date(stats.timestamp).toLocaleTimeString() : "Just now"}
-                </p>
+              <div className="flex items-center space-x-4">
+                <div className="text-right hidden md:block">
+                  <p className="text-xs text-gray-500">Last updated</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {stats?.timestamp ? new Date(stats.timestamp).toLocaleTimeString() : "Just now"}
+                  </p>
+                </div>
+                {/* Profile & Logout */}
+                <div className="flex items-center space-x-3 pl-4 border-l border-gray-200">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                      {user?.name?.charAt(0).toUpperCase() || "A"}
+                    </div>
+                    <div className="hidden md:block">
+                      <p className="text-sm font-medium text-gray-900">{user?.name || "Admin"}</p>
+                      <p className="text-xs text-gray-500">{user?.email || ""}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout();
+                      router.push("/login");
+                    }}
+                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Logout"
+                  >
+                    <LogOut className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

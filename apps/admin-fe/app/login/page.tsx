@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
-import { Lock, Mail } from "lucide-react";
+import { Lock, Mail, Shield, UserCog } from "lucide-react";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [adminType, setAdminType] = useState<"SUPER_ADMIN" | "MAIN_ADMIN">("SUPER_ADMIN");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login, isAuthenticated, loading: authLoading } = useAdminAuth();
@@ -25,13 +26,13 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const success = await login(email, password);
+      const success = await login(email, password, adminType);
       
       if (success) {
         await new Promise(resolve => setTimeout(resolve, 200));
         router.push("/dashboard");
       } else {
-        setError("Invalid credentials. Please check your email and password.");
+        setError("Invalid credentials or account type mismatch. Please check your email, password, and admin type.");
       }
     } catch (err: any) {
       const errorMsg = err.message || err.error || "Login failed. Please try again.";
@@ -69,6 +70,35 @@ export default function AdminLoginPage() {
                 {error}
               </div>
             )}
+
+            <div>
+              <label htmlFor="adminType" className="block text-sm font-medium text-gray-700 mb-2">
+                Admin Type
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  {adminType === "MAIN_ADMIN" ? (
+                    <UserCog className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <Shield className="h-5 w-5 text-gray-400" />
+                  )}
+                </div>
+                <select
+                  id="adminType"
+                  value={adminType}
+                  onChange={(e) => setAdminType(e.target.value as "SUPER_ADMIN" | "MAIN_ADMIN")}
+                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white"
+                >
+                  <option value="SUPER_ADMIN">Super Admin</option>
+                  <option value="MAIN_ADMIN">Main Admin</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">

@@ -12,8 +12,8 @@ const __dirname = dirname(__filename);
 // Load .env file manually - check multiple possible locations
 const possibleEnvPaths = [
   join(__dirname, "../.env"),           // apps/server/.env
-  join(__dirname, "../../.env"),       // root/.env
-  join(__dirname, "../../../.env"),     // if scripts is nested
+  join(__dirname, "../../.env"),        // root/.env
+  join(__dirname, "../../../.env"),    // if scripts is nested
 ];
 
 let envLoaded = false;
@@ -59,7 +59,6 @@ const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
   console.error("❌ ERROR: DATABASE_URL environment variable is required!");
-  console.error("Please set DATABASE_URL in your .env file or environment variables.");
   process.exit(1);
 }
 
@@ -76,55 +75,79 @@ const prisma = new PrismaClient({
   log: ["error", "warn"],
 });
 
-async function createAdmin() {
-  const email = process.env.ADMIN_EMAIL || "admin@example.com";
-  const password = process.env.ADMIN_PASSWORD || "admin123";
-  const name = process.env.ADMIN_NAME || "Admin User";
+async function createMainAdmin() {
+  const email = process.env.MAIN_ADMIN_EMAIL || "mainadmin@example.com";
+  const password = process.env.MAIN_ADMIN_PASSWORD || "mainadmin123";
+  const name = process.env.MAIN_ADMIN_NAME || "Main Admin";
 
   try {
-    // Check if admin already exists
-    const existingAdmin = await prisma.admin.findUnique({
-      where: { email },
+    // Check if main admin already exists
+    const existingMainAdmin = await prisma.admin.findFirst({
+      where: { role: "MAIN_ADMIN" },
     });
 
-    if (existingAdmin) {
-      // Update existing admin password
+    if (existingMainAdmin) {
+      // Update existing main admin password
       const hashedPassword = await hashPassword(password);
       const updatedAdmin = await prisma.admin.update({
-        where: { email },
+        where: { id: existingMainAdmin.id },
         data: {
           password: hashedPassword,
-          name: name, // Update name if changed
+          name: name,
         },
       });
-      console.log("Updated existing admin:");
+      console.log("✅ Updated existing main admin:");
       console.log(`   Email: ${updatedAdmin.email}`);
       console.log(`   Name: ${updatedAdmin.name}`);
       console.log(`   Password: ${password}`);
     } else {
-      // Create new admin (super admin by default)
-      const hashedPassword = await hashPassword(password);
-      const newAdmin = await prisma.admin.create({
-        data: {
-          email,
-          name,
-          password: hashedPassword,
-          role: "SUPER_ADMIN",
-          isActive: true,
-        },
+      // Check if admin with this email exists
+      const existingAdmin = await prisma.admin.findUnique({
+        where: { email },
       });
-      console.log(" Created new admin:");
-      console.log(`   Email: ${newAdmin.email}`);
-      console.log(`   Name: ${newAdmin.name}`);
-      console.log(`   Password: ${password}`);
+
+      if (existingAdmin) {
+        // Update to main admin
+        const hashedPassword = await hashPassword(password);
+        const updatedAdmin = await prisma.admin.update({
+          where: { id: existingAdmin.id },
+          data: {
+            role: "MAIN_ADMIN",
+            password: hashedPassword,
+            name: name,
+            isActive: true,
+          },
+        });
+        console.log("✅ Updated admin to main admin:");
+        console.log(`   Email: ${updatedAdmin.email}`);
+        console.log(`   Name: ${updatedAdmin.name}`);
+        console.log(`   Password: ${password}`);
+      } else {
+        // Create new main admin
+        const hashedPassword = await hashPassword(password);
+        const newAdmin = await prisma.admin.create({
+          data: {
+            email,
+            name,
+            password: hashedPassword,
+            role: "MAIN_ADMIN",
+            isActive: true,
+          },
+        });
+        console.log("✅ Created new main admin:");
+        console.log(`   Email: ${newAdmin.email}`);
+        console.log(`   Name: ${newAdmin.name}`);
+        console.log(`   Password: ${password}`);
+      }
     }
 
-    console.log("\n🎉 Admin user ready!");
+    console.log("\n🎉 Main admin ready!");
     console.log(`\nYou can now login at: http://localhost:3003/login`);
     console.log(`Email: ${email}`);
     console.log(`Password: ${password}`);
+    console.log(`\n⚠️  IMPORTANT: Change the password after first login!`);
   } catch (error) {
-    console.error("❌ Error creating admin:", error);
+    console.error("❌ Error creating main admin:", error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();
@@ -132,5 +155,5 @@ async function createAdmin() {
   }
 }
 
-createAdmin();
+createMainAdmin();
 

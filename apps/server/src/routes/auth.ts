@@ -19,6 +19,7 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+  adminType: z.enum(["SUPER_ADMIN", "MAIN_ADMIN"]).optional(),
 });
 
 const guestLoginSchema = z.object({
@@ -370,19 +371,46 @@ router.post("/google", asyncHandler(async (req, res) => {
  */
 router.post("/admin/login", asyncHandler(async (req, res) => {
   const validated = loginSchema.parse(req.body);
-  const { email, password } = validated;
+  const { email, password, adminType } = validated;
 
   // Find admin in Admin table
   const admin = await prisma.admin.findUnique({
     where: { email },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isActive: true,
+    },
   });
 
   if (!admin) {
     return res.status(401).json({ error: "Invalid credentials" });
   }
 
-  // Verify password
-  const isValid = await comparePassword(password, admin.password);
+  if (!admin.isActive) {
+    return res.status(403).json({ error: "Admin account is deactivated" });
+  }
+
+  // Validate admin type matches if provided
+  if (adminType && admin.role !== adminType) {
+    return res.status(403).json({ 
+      error: "Account type mismatch", 
+      details: `This account is a ${admin.role === "MAIN_ADMIN" ? "Main Admin" : "Super Admin"}, but you selected ${adminType === "MAIN_ADMIN" ? "Main Admin" : "Super Admin"}. Please select the correct admin type.`
+    });
+  }
+
+  // Verify password - need to get full admin record for password check
+  const adminWithPassword = await prisma.admin.findUnique({
+    where: { email },
+  });
+
+  if (!adminWithPassword) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  const isValid = await comparePassword(password, adminWithPassword.password);
   if (!isValid) {
     return res.status(401).json({ error: "Invalid credentials" });
   }
@@ -401,6 +429,8 @@ router.post("/admin/login", asyncHandler(async (req, res) => {
       name: admin.name,
       email: admin.email,
       isAdmin: true,
+      isMainAdmin: admin.role === "MAIN_ADMIN",
+      role: admin.role,
     },
     token,
   });

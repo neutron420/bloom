@@ -59,14 +59,14 @@ class AdminApi {
   }
 
   // Auth
-  async adminLogin(email: string, password: string) {
-    console.log("AdminApi.adminLogin called with:", { email, apiUrl: API_BASE_URL });
+  async adminLogin(email: string, password: string, adminType?: "SUPER_ADMIN" | "MAIN_ADMIN") {
+    console.log("AdminApi.adminLogin called with:", { email, adminType, apiUrl: API_BASE_URL });
     try {
       const result = await this.request<{ user: any; token: string; message: string }>(
         "/api/auth/admin/login",
         {
           method: "POST",
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email, password, adminType }),
         }
       );
       console.log("AdminApi.adminLogin success:", result);
@@ -441,6 +441,37 @@ class AdminApi {
     });
     if (type) params.append("type", type);
     return this.request<any>(`/api/admin/moderation/queue?${params.toString()}`);
+  }
+
+  // Main Admin: Admin Management
+  async getSuperAdmins() {
+    return this.request<any>(`/api/admin/admins`);
+  }
+
+  async createSuperAdmin(data: { name: string; email: string; password: string }) {
+    return this.request<any>(`/api/admin/admins`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async toggleSuperAdmin(id: string) {
+    return this.request<any>(`/api/admin/admins/${id}/toggle`, {
+      method: "PATCH",
+    });
+  }
+
+  async updateSuperAdmin(id: string, data: { name?: string; email?: string; password?: string }) {
+    return this.request<any>(`/api/admin/admins/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteSuperAdmin(id: string) {
+    return this.request<any>(`/api/admin/admins/${id}`, {
+      method: "DELETE",
+    });
   }
 }
 
