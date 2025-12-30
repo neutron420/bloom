@@ -41,7 +41,7 @@ for (const envPath of possibleEnvPaths) {
       }
     });
     envLoaded = true;
-    console.log(`✅ Loaded .env file from: ${envPath}`);
+    console.log(`Loaded .env file from: ${envPath}`);
     break;
   } catch (error) {
     // Try next path
@@ -50,7 +50,7 @@ for (const envPath of possibleEnvPaths) {
 }
 
 if (!envLoaded) {
-  console.warn("⚠️  Could not find .env file in common locations, using system environment variables");
+  console.warn(" Could not find .env file in common locations, using system environment variables");
   console.warn("   Checked paths:");
   possibleEnvPaths.forEach(path => console.warn(`   - ${path}`));
 }
@@ -58,7 +58,7 @@ if (!envLoaded) {
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  console.error("❌ ERROR: DATABASE_URL environment variable is required!");
+  console.error(" ERROR: DATABASE_URL environment variable is required!");
   console.error("Please set DATABASE_URL in your .env file or environment variables.");
   process.exit(1);
 }
