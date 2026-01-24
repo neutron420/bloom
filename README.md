@@ -16,7 +16,7 @@
 
 <br/>
 
-**A high-performance monorepo built with Turborepo, featuring multiple Next.js applications with shared UI components, configurations, and optimized build pipelines for scalable web development.**
+**A modern video conferencing application built with Turborepo monorepo architecture, featuring real-time communication, multiple Next.js applications with shared UI components, and optimized build pipelines for seamless virtual meetings.**
 
 <p>
   <a href="#about-the-project">About</a> •
@@ -32,7 +32,7 @@
 
 ## About The Project
 
-Bloom is a modern monorepo architecture powered by Turborepo, designed to manage multiple Next.js applications and shared packages efficiently. The project demonstrates best practices for organizing large-scale web applications with shared UI components, unified configurations, and optimized build processes. With remote caching and intelligent task scheduling, Bloom ensures fast development cycles and consistent deployments across multiple applications.
+Bloom is a cutting-edge video conferencing platform built with modern web technologies and Turborepo monorepo architecture. Designed to provide seamless virtual meetings with high-quality audio and video, the application leverages Next.js for optimal performance and real-time communication capabilities. With shared UI components and unified configurations across multiple applications, Bloom ensures consistent user experience while maintaining scalability and efficient development workflows.
 
 ### Built With
 
@@ -48,16 +48,18 @@ This monorepo leverages cutting-edge tools for maximum developer productivity an
 
 ## Key Features
 
+* **Real-Time Video Conferencing:** High-quality video and audio communication for virtual meetings
+* **Screen Sharing:** Share your screen with meeting participants
+* **Chat Functionality:** In-meeting text chat for better collaboration
 * **Monorepo Architecture:** Efficient code sharing and management across multiple applications
 * **Shared UI Components:** Reusable React component library across all apps
 * **Unified Configuration:** Centralized ESLint and TypeScript configurations
 * **Remote Caching:** Vercel Remote Cache for faster builds across team and CI/CD
 * **Parallel Task Execution:** Turborepo's intelligent task scheduling for optimal performance
 * **Type Safety:** Full TypeScript support across all packages and applications
-* **Hot Module Replacement:** Fast refresh and development experience
-* **Incremental Builds:** Only rebuild what changed for lightning-fast iterations
-* **Workspace Management:** Efficient dependency management with npm workspaces
-* **Production Ready:** Optimized builds with automatic code splitting and tree shaking
+* **Responsive Design:** Works seamlessly on desktop, tablet, and mobile devices
+* **Meeting Rooms:** Create and join virtual meeting rooms
+* **User Management:** Participant controls and permissions
 
 ## Monorepo Structure
 
